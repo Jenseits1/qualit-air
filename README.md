@@ -1,0 +1,138 @@
+# QualitAir
+
+Sistema de monitoramento de temperatura e umidade usando ESP32, sensor DHT22 e comunicação MQTT.
+
+## Descrição
+
+Este projeto monitora continuamente a temperatura e umidade do ambiente, publicando os dados via MQTT e sinalizando visualmente quando os parâmetros estão fora da faixa ideal através de LEDs.
+
+## Componentes Necessários
+
+-   **ESP32** (placa de desenvolvimento)
+-   **Sensor DHT22** (temperatura e umidade)
+-   **LED Verde** (indicador de condições normais)
+-   **LED Vermelho** (indicador de alerta)
+-   **Resistores** 220Ω para os LEDs
+-   Cabos jumper para conexões
+
+## Diagrama de Conexões
+
+### Simulação no Wokwi
+
+🔗 **[Visualizar projeto completo no Wokwi](https://wokwi.com/projects/448265554947206145)**
+
+Você pode testar e simular o projeto diretamente no navegador através do link acima!
+
+### Esquema de Conexões Completo
+
+#### Sensor DHT22
+
+| Pino DHT22 | Conexão        | Pino ESP32    |
+| ---------- | -------------- | ------------- |
+| VCC        | Alimentação    | 3V3           |
+| SDA (Data) | Sinal de dados | D14 (GPIO 14) |
+| GND        | Terra          | GND           |
+
+#### LED Vermelho (Alerta)
+
+| Componente | Conexão                         |
+| ---------- | ------------------------------- |
+| Anodo (+)  | → Resistor 220Ω → D15 (GPIO 15) |
+| Catodo (-) | → GND                           |
+
+#### LED Verde (Normal)
+
+| Componente | Conexão                       |
+| ---------- | ----------------------------- |
+| Anodo (+)  | → Resistor 220Ω → D2 (GPIO 2) |
+| Catodo (-) | → GND                         |
+
+### Notas Importantes
+
+-   **Sempre use resistores de 220Ω** em série com os LEDs para limitar a corrente
+-   O sensor DHT22 é alimentado com **3.3V** (não use 5V no ESP32)
+-   O pino SDA do DHT22 é o pino de dados (não confundir com I2C)
+
+## Bibliotecas Necessárias
+
+### Para Arduino IDE
+
+Instale as seguintes bibliotecas através do Arduino IDE (Sketch → Include Library → Manage Libraries):
+
+-   **WiFi** (integrada ao ESP32)
+-   **PubSubClient** v2.8 por Nick O'Leary
+-   **DHT sensor library** por Adafruit
+-   **ArduinoJson** v6.20.0 por Benoit Blanchon (opcional, para expansões futuras)
+
+### Para Wokwi
+
+O projeto já está configurado com o arquivo `libraries.txt`:
+
+```txt
+DHT sensor library
+PubSubClient@2.8
+ArduinoJson@6.20.0
+WiFi
+```
+
+Basta abrir o projeto no Wokwi que as bibliotecas serão carregadas automaticamente!
+
+## Configuração
+
+### 1. Credenciais WiFi
+
+Edite as seguintes linhas no código para sua rede:
+
+```cpp
+const char* ssid = "SUA_REDE_WIFI";
+const char* password = "SUA_SENHA_WIFI";
+```
+
+### 2. Broker MQTT
+
+O projeto usa o broker público `test.mosquitto.org`. Para usar outro broker:
+
+```cpp
+const char* mqtt_server = "seu.broker.mqtt";
+const int mqtt_port = 1883;
+```
+
+### 3. Tópico MQTT
+
+Os dados são publicados no tópico:
+
+```
+iot/airquality/data
+```
+
+## Faixas de Operação
+
+### Condições Normais (LED Verde)
+
+-   **Temperatura:** 18°C a 26°C
+-   **Umidade:** 30% a 60%
+
+### Condições de Alerta (LED Vermelho)
+
+-   Temperatura < 18°C ou > 26°C
+-   Umidade < 30% ou > 60%
+
+## Formato dos Dados MQTT
+
+Os dados são publicados em formato JSON:
+
+```json
+{
+	"temperatura": 23.5,
+	"humidade": 45.2
+}
+```
+
+## Como Usar
+
+1. Instale as bibliotecas necessárias no Arduino IDE
+2. Configure as credenciais WiFi no código
+3. Conecte os componentes conforme o diagrama de pinos
+4. Faça upload do código para o ESP32
+5. Abra o Serial Monitor (115200 baud) para acompanhar os logs
+6. Os dados serão enviados a cada 2 segundos
