@@ -16,9 +16,7 @@ Este projeto monitora continuamente a temperatura, umidade e qualidade do ar do 
 -   **Resistores** 220Ω para os LEDs
 -   Cabos jumper para conexões
 
-## Diagrama de Conexões
-
-### Simulação no Wokwi
+## Simulação no Wokwi
 
 🔗 **[Visualizar projeto completo no Wokwi](https://wokwi.com/projects/448265554947206145)**
 
