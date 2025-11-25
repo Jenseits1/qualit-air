@@ -8,16 +8,22 @@ DHT dht(DHTPIN, DHTTYPE);
 
 #define GREEN_LED 2
 #define RED_LED 15
+#define GAS_SENSOR_PIN 34
 
-const char* mqtt_server = "test.mosquitto.org";
+const char* mqtt_server = "broker.hivemq.com";
 const int mqtt_port = 1883;
-const char* topic_pub = "iot/airquality/data";
+const char* topic_pub = "wokwi/iot/airquality/data";
 
 WiFiClient espClient;
 PubSubClient client(espClient);
 
 const char* ssid = "Wokwi-GUEST";
 const char* password = "";
+
+const int AIR_QUALITY_GOOD = 600;
+const int AIR_QUALITY_BAD = 1000;
+
+unsigned long lastReconnectAttempt = 0;
 
 void setup_wifi() {
   Serial.println("Conectando ao WiFi...");
@@ -34,8 +40,10 @@ void setup_wifi() {
 }
 
 void reconnect() {
-  while (!client.connected()) {
-    Serial.println("Conectando ao broker MQTT...");
+  if (millis() - lastReconnectAttempt > 5000) {
+    lastReconnectAttempt = millis();
+    
+    Serial.println("Tentando conectar ao broker MQTT...");
 
     String clientId = "ESP32-AirQuality-";
     clientId += String(random(0xffff), HEX);
@@ -44,8 +52,8 @@ void reconnect() {
       Serial.println("MQTT conectado!");
     } else {
       Serial.print("Falha MQTT, rc=");
-      Serial.println(client.state());
-      delay(1000);
+      Serial.print(client.state());
+      Serial.println(" - Tentando novamente em 5s...");
     }
   }
 }
@@ -56,6 +64,7 @@ void setup() {
 
   pinMode(GREEN_LED, OUTPUT);
   pinMode(RED_LED, OUTPUT);
+  pinMode(GAS_SENSOR_PIN, INPUT);
 
   setup_wifi();
   client.setServer(mqtt_server, mqtt_port);
@@ -64,11 +73,17 @@ void setup() {
 }
 
 void loop() {
-  if (!client.connected()) reconnect();
-  client.loop();
+  if (!client.connected()) {
+    reconnect();
+  } else {
+    client.loop();
+  }
 
   float temperature = dht.readTemperature();
   float humidity = dht.readHumidity();
+  
+  int gasRaw = analogRead(GAS_SENSOR_PIN);
+  float gasPPM = map(gasRaw, 0, 4095, 0, 2000);
 
   if (isnan(temperature) || isnan(humidity)) {
     Serial.println("Erro ao ler DHT!");
@@ -78,8 +93,9 @@ void loop() {
 
   bool tempBad = (temperature < 18.0 || temperature > 26.0);
   bool humBad  = (humidity < 30.0 || humidity > 60.0);
+  bool gasBad  = (gasPPM > AIR_QUALITY_BAD);
 
-  if (tempBad || humBad) {
+  if (tempBad || humBad || gasBad) {
     digitalWrite(RED_LED, HIGH);
     digitalWrite(GREEN_LED, LOW);
   } else {
@@ -89,21 +105,15 @@ void loop() {
 
   String payload = "{";
   payload += "\"temperatura\":" + String(temperature, 1) + ",";
-  payload += "\"humidade\":" + String(humidity, 1);
+  payload += "\"humidade\":" + String(humidity, 1) + ",";
+  payload += "\"gas_ppm\":" + String(gasPPM, 0);
   payload += "}";
 
-  unsigned long startPublish = micros();
-  bool sent = client.publish(topic_pub, payload.c_str());
-  unsigned long publishTime = micros() - startPublish;
+  Serial.println(payload);
 
-  if (sent) {
-    Serial.println("MQTT enviado: " + payload);
-  } else {
-    Serial.println("Erro ao enviar MQTT!");
+  if (client.connected()) {
+    client.publish(topic_pub, payload.c_str());
   }
-
-  Serial.print("Tempo de envio MQTT (microssegundos): ");
-  Serial.println(publishTime);
 
   delay(2000);
 }

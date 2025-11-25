@@ -1,0 +1,74 @@
+{
+	"version": 1,
+	"editor": "wokwi",
+	"parts": [
+		{
+			"type": "wokwi-esp32-devkit-v1",
+			"id": "esp",
+			"top": 23.9,
+			"left": 14.2,
+			"attrs": {}
+		},
+		{
+			"type": "wokwi-led",
+			"id": "ledRed",
+			"top": -13.2,
+			"left": -34.6,
+			"attrs": { "color": "red" }
+		},
+		{
+			"type": "wokwi-resistor",
+			"id": "rRed",
+			"top": 128,
+			"left": 135,
+			"rotate": 90,
+			"attrs": { "value": "220" }
+		},
+		{
+			"type": "wokwi-led",
+			"id": "ledGreen",
+			"top": -10,
+			"left": -70,
+			"attrs": { "color": "green" }
+		},
+		{
+			"type": "wokwi-resistor",
+			"id": "rGreen",
+			"top": 62,
+			"left": -75,
+			"rotate": 90,
+			"attrs": { "value": "220" }
+		},
+		{
+			"type": "wokwi-dht22",
+			"id": "dht1",
+			"top": 86.7,
+			"left": 177,
+			"attrs": { "temperature": "21.4" }
+		},
+		{
+			"type": "wokwi-slide-potentiometer",
+			"id": "pot1",
+			"top": 216.2,
+			"left": 123.8,
+			"attrs": { "value": "500" }
+		}
+	],
+	"connections": [
+		["esp:TX0", "$serialMonitor:RX", "", []],
+		["esp:RX0", "$serialMonitor:TX", "", []],
+		["ledRed:A", "rRed:1", "red", []],
+		["esp:D15", "rRed:2", "cyan", []],
+		["esp:GND.1", "ledRed:C", "black", []],
+		["ledGreen:A", "rGreen:1", "green", []],
+		["esp:D2", "rGreen:2", "gray", []],
+		["esp:GND.2", "ledGreen:C", "black", []],
+		["dht1:GND", "esp:GND.1", "black", []],
+		["dht1:VCC", "esp:3V3", "red", []],
+		["dht1:SDA", "esp:D14", "green", []],
+		["pot1:VCC", "esp:3V3", "red", []],
+		["pot1:GND", "esp:GND.1", "black", []],
+		["pot1:SIG", "esp:D34", "blue", []]
+	],
+	"dependencies": {}
+}
